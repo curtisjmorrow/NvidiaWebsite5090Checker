@@ -1,0 +1,16 @@
+selenium>=4.16.0
+
+# Optional notification dependencies
+# Uncomment the ones you want to use:
+
+# For desktop notifications (cross-platform)
+# plyer>=2.1.0
+
+# For Windows toast notifications
+# win10toast>=0.9
+
+# For playing sound alerts
+# playsound>=1.3.0
+
+# For HTTP webhook and Telegram/Discord notifications
+# requests>=2.31.0
