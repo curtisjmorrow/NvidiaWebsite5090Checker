@@ -7,6 +7,7 @@ on the NVIDIA Marketplace website.
 
 import time
 import logging
+import random
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -64,10 +65,34 @@ class NvidiaStockChecker:
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
+        # Randomize user agent to appear more human-like
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ]
+        chrome_options.add_argument(f'user-agent={random.choice(user_agents)}')
+
+        # Additional anti-detection measures
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
 
         try:
             self.driver = webdriver.Chrome(options=chrome_options)
+
+            # Remove webdriver property to avoid detection
+            self.driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+                'source': '''
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    })
+                '''
+            })
+
             logger.info("Chrome WebDriver initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize Chrome WebDriver: {e}")
@@ -87,8 +112,20 @@ class NvidiaStockChecker:
             logger.info(f"Loading URL: {self.url}")
             self.driver.get(self.url)
 
-            # Wait for page to load
-            time.sleep(3)
+            # Random wait time to appear more human-like (2-5 seconds)
+            wait_time = random.uniform(2.0, 5.0)
+            logger.debug(f"Waiting {wait_time:.2f} seconds for page load")
+            time.sleep(wait_time)
+
+            # Occasionally scroll to simulate human behavior
+            if random.random() < 0.3:  # 30% chance
+                try:
+                    scroll_amount = random.randint(100, 500)
+                    self.driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                    time.sleep(random.uniform(0.5, 1.5))
+                    self.driver.execute_script("window.scrollTo(0, 0);")  # Scroll back to top
+                except Exception:
+                    pass  # Ignore scroll errors
 
             # Look for various stock indicators
             stock_status = self._detect_stock_status()
@@ -235,18 +272,18 @@ class NvidiaStockChecker:
             self.driver.quit()
             logger.info("WebDriver closed")
 
-    def monitor(self, interval=300, duration=None):
+    def monitor(self, interval=10, duration=None):
         """
         Continuously monitor stock status
 
         Args:
-            interval: Time between checks in seconds (default: 300 = 5 minutes)
+            interval: Base time between checks in seconds (default: 10)
             duration: Total duration to monitor in seconds (None = infinite)
         """
         start_time = time.time()
         check_count = 0
 
-        logger.info(f"Starting stock monitoring (check interval: {interval}s)")
+        logger.info(f"Starting stock monitoring (base interval: {interval}s with randomization)")
 
         try:
             while True:
@@ -290,9 +327,14 @@ Go buy it now!
                     logger.info(f"Monitoring duration complete ({duration}s)")
                     break
 
-                # Wait before next check
-                logger.info(f"Waiting {interval} seconds until next check...")
-                time.sleep(interval)
+                # Randomize wait time to avoid detection (±20% variation)
+                # For 10 second interval: random between 8-12 seconds
+                min_wait = interval * 0.8
+                max_wait = interval * 1.2
+                actual_wait = random.uniform(min_wait, max_wait)
+
+                logger.info(f"Waiting {actual_wait:.1f} seconds until next check...")
+                time.sleep(actual_wait)
 
         except KeyboardInterrupt:
             logger.info("Monitoring stopped by user")
@@ -317,8 +359,8 @@ def main():
     parser.add_argument(
         '--interval',
         type=int,
-        default=300,
-        help='Monitoring interval in seconds (default: 300)'
+        default=10,
+        help='Monitoring interval in seconds (default: 10, randomized ±20%%)'
     )
     parser.add_argument(
         '--duration',
