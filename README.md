@@ -450,14 +450,19 @@ python3 nvidia_stock_checker.py --monitor
 ## Command-Line Options
 
 ```
-usage: nvidia_stock_checker.py [-h] [--url URL] [--monitor]
-                               [--interval INTERVAL] [--duration DURATION]
+usage: nvidia_stock_checker.py [-h] [--url URL] [--no-nvidia] [--no-bestbuy]
+                               [--nvidia-url URL] [--bestbuy-url URL]
+                               [--monitor] [--interval INTERVAL] [--duration DURATION]
                                [--no-headless] [--notify-config NOTIFY_CONFIG]
                                [--create-notify-config] [--test-notification]
 
 Options:
   -h, --help            Show help message
-  --url URL             URL to check (default: RTX 5090 Founders Edition)
+  --url URL             URL to check (can specify multiple times, overrides defaults)
+  --no-nvidia           Exclude NVIDIA from monitoring (only monitor Best Buy)
+  --no-bestbuy          Exclude Best Buy from monitoring (only monitor NVIDIA)
+  --nvidia-url URL      Custom NVIDIA URL to monitor (overrides default)
+  --bestbuy-url URL     Custom Best Buy URL to monitor (overrides default)
   --monitor             Continuously monitor instead of single check
   --interval INTERVAL   Check interval in seconds (default: 10, randomized ±20%)
   --duration DURATION   Total monitoring duration in seconds (default: infinite)
@@ -478,6 +483,15 @@ python nvidia_stock_checker.py
 
 # Monitor with visible console (default: 10 seconds, randomized)
 python nvidia_stock_checker.py --monitor
+
+# Monitor both NVIDIA and Best Buy with custom Best Buy URL
+python nvidia_stock_checker.py --monitor --bestbuy-url "https://www.bestbuy.com/product/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/J3GWYHGPCP"
+
+# Monitor only NVIDIA (skip Best Buy)
+python nvidia_stock_checker.py --monitor --no-bestbuy
+
+# Monitor only Best Buy (skip NVIDIA)
+python nvidia_stock_checker.py --monitor --no-nvidia
 
 # Monitor completely hidden in background
 Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden

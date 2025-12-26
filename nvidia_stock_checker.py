@@ -465,6 +465,18 @@ def main():
         help='Exclude Best Buy from default URLs (only monitor NVIDIA)'
     )
     parser.add_argument(
+        '--nvidia-url',
+        type=str,
+        default=None,
+        help='Custom NVIDIA URL to monitor (overrides default NVIDIA URL)'
+    )
+    parser.add_argument(
+        '--bestbuy-url',
+        type=str,
+        default=None,
+        help='Custom Best Buy URL to monitor (overrides default Best Buy URL)'
+    )
+    parser.add_argument(
         '--monitor',
         action='store_true',
         help='Continuously monitor instead of single check'
@@ -564,13 +576,15 @@ Time: {timestamp}
     if args.url is None:
         urls = []
 
-        # Add NVIDIA unless excluded
+        # Add NVIDIA unless excluded (use custom URL if provided)
         if not args.no_nvidia:
-            urls.append('https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/')
+            nvidia_url = args.nvidia_url if args.nvidia_url else 'https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/'
+            urls.append(nvidia_url)
 
-        # Add Best Buy unless excluded (use latest product URL format)
+        # Add Best Buy unless excluded (use custom URL if provided, otherwise use latest product URL format)
         if not args.no_bestbuy:
-            urls.append('https://www.bestbuy.com/product/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/J3GWYHGPCP')
+            bestbuy_url = args.bestbuy_url if args.bestbuy_url else 'https://www.bestbuy.com/product/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/J3GWYHGPCP'
+            urls.append(bestbuy_url)
 
         # Make sure at least one URL is enabled
         if not urls:
