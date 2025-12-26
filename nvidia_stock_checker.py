@@ -89,6 +89,12 @@ class NvidiaStockChecker:
         try:
             self.driver = webdriver.Chrome(options=chrome_options)
 
+            # Set page load timeout to 30 seconds
+            self.driver.set_page_load_timeout(30)
+
+            # Set script timeout
+            self.driver.set_script_timeout(30)
+
             # Remove webdriver property to avoid detection
             self.driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
                 'source': '''
@@ -115,7 +121,20 @@ class NvidiaStockChecker:
 
         try:
             logger.info(f"Loading URL: {self.url}")
-            self.driver.get(self.url)
+
+            try:
+                self.driver.get(self.url)
+            except TimeoutException:
+                logger.error("Page load timeout - restarting driver")
+                self.close()
+                self.setup_driver()
+                return {
+                    'timestamp': datetime.now().isoformat(),
+                    'url': self.url,
+                    'in_stock': None,
+                    'status_text': 'Page load timeout - will retry next check',
+                    'detection_method': 'timeout'
+                }
 
             # Random wait time to appear more human-like (2-5 seconds)
             wait_time = random.uniform(2.0, 5.0)
@@ -145,8 +164,24 @@ class NvidiaStockChecker:
 
             return result
 
+        except TimeoutException as e:
+            logger.error(f"Timeout error checking stock: {e}")
+            # Restart driver on timeout
+            self.close()
+            return {
+                'timestamp': datetime.now().isoformat(),
+                'url': self.url,
+                'in_stock': None,
+                'status_text': 'Timeout error - driver restarted',
+                'detection_method': 'timeout_error'
+            }
         except Exception as e:
             logger.error(f"Error checking stock: {e}")
+            # Try to restart driver on errors
+            try:
+                self.close()
+            except:
+                pass
             return {
                 'timestamp': datetime.now().isoformat(),
                 'url': self.url,
