@@ -295,13 +295,15 @@ class NvidiaStockChecker:
                 if result['in_stock'] is True:
                     logger.warning("PRODUCT IS IN STOCK!")
                     alert_message = f"""
-RTX 5090 IS IN STOCK!
+🚨 RTX 5090 IS IN STOCK! 🚨
 
 Status: {result['status_text']}
-URL: {result['url']}
 Time: {result['timestamp']}
 
-Go buy it now!
+👉 BUY NOW:
+{result['url']}
+
+Click the link above to purchase immediately!
 """
                     print("\n" + "="*60)
                     print("ALERT: RTX 5090 IS IN STOCK!")
