@@ -135,28 +135,53 @@ python nvidia_stock_checker.py --monitor --no-headless
 
 ## Optional: Set Up Notifications
 
-### Create Notification Config
-```powershell
-python nvidia_stock_checker.py --create-notify-config
-```
+You have several notification options:
 
-This creates `notification_config.json`. Edit it with Notepad:
+### Recommended: Telegram (Get notified on your phone!)
+
+**Best for**: Getting alerts while away from your PC
+
+See **TELEGRAM_SETUP.md** for complete step-by-step instructions!
+
+Quick summary:
+1. Create a bot with @BotFather on Telegram
+2. Get your bot token and chat ID
+3. Configure notification_config.json
+4. Get instant alerts on your phone!
+
 ```powershell
+# Install requests package
+pip install requests
+
+# Create config
+python nvidia_stock_checker.py --create-notify-config
+
+# Edit and add your Telegram bot token and chat ID
 notepad notification_config.json
 ```
 
-Enable desktop notifications (easiest option for Windows):
+### Alternative: Desktop Notifications
+
+**Best for**: When sitting at your PC
+
+```powershell
+# Install plyer package
+pip install plyer
+
+# Create config
+python nvidia_stock_checker.py --create-notify-config
+
+# Edit config
+notepad notification_config.json
+```
+
+Enable desktop notifications:
 ```json
 {
   "desktop": {
     "enabled": true
   }
 }
-```
-
-For desktop notifications to work, install the plyer package:
-```powershell
-pip install plyer
 ```
 
 ## Running in Background

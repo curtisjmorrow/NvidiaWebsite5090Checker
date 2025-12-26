@@ -126,14 +126,32 @@ python nvidia_stock_checker.py --monitor --no-headless
 
 ## Notification Setup
 
-### 1. Create Notification Configuration
+### Recommended: Telegram (Phone Notifications!)
+
+**For detailed Telegram setup instructions, see [TELEGRAM_SETUP.md](TELEGRAM_SETUP.md)**
+
+Telegram is the best option for getting notified on your phone while away from your PC:
+- ✅ Free and instant push notifications
+- ✅ Works on iPhone, Android, desktop
+- ✅ Takes 2-3 minutes to set up
+- ✅ More reliable than email
+
+Quick steps:
+1. Create a bot with @BotFather
+2. Get your bot token and chat ID
+3. Install requests: `pip install requests`
+4. Configure notification_config.json with your details
+
+### All Notification Options
+
+**1. Create Notification Configuration**
 ```bash
 python nvidia_stock_checker.py --create-notify-config
 ```
 
 This creates a `notification_config.json` file with sample settings.
 
-### 2. Edit Configuration
+**2. Edit Configuration**
 
 Edit `notification_config.json` to enable and configure your preferred notification methods:
 
