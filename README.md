@@ -171,16 +171,55 @@ Check the log file to verify Telegram is configured:
 notepad stock_checker.log
 ```
 
-### Step 6: Start Monitoring
+### Step 6: Test Notifications (Recommended)
 
-**Run in background (hidden):**
+Before starting monitoring, test that notifications work:
+
+```powershell
+python nvidia_stock_checker.py --test-notification
+```
+
+You should receive a test message on your phone (and desktop if enabled). If it works, proceed!
+
+### Step 7: Start Monitoring
+
+**Option A: Run with visible console (recommended while testing):**
+```powershell
+python nvidia_stock_checker.py --monitor
+```
+- Shows live updates in PowerShell window
+- Browser runs hidden (headless)
+- Don't close the window - minimize it instead
+
+**Option B: Run completely hidden in background:**
 ```powershell
 Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
 ```
+- No console window
+- Completely invisible
+- Stop via Task Manager
 
-**That's it!** The script is now running in the background, checking every 10 seconds (randomized 8-12 seconds to avoid detection). When the RTX 5090 comes in stock, you'll get an instant Telegram message on your phone!
+**Option C: Separate window with live updates:**
+```powershell
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Normal
+```
+- Opens new window with live console output
+- Can close original PowerShell
+- Browser still runs hidden
+
+**That's it!** The script is now running, checking every 10 seconds (randomized 8-12 seconds to avoid detection). When the RTX 5090 comes in stock, you'll get an instant Telegram message on your phone with a clickable link!
 
 ## Managing the Background Process
+
+### Stop the Script
+
+**If running with visible console:**
+- Press `Ctrl + C` in the PowerShell window
+
+**If running hidden (Start-Process):**
+1. Open Task Manager (`Ctrl + Shift + Esc`)
+2. Find "Python" processes
+3. Right-click → End Task
 
 ### View the Log
 
@@ -190,20 +229,25 @@ notepad stock_checker.log
 
 # View in real-time
 Get-Content stock_checker.log -Wait
+
+# Search for important events
+Select-String -Path stock_checker.log -Pattern "IN STOCK"
 ```
-
-### Stop the Script
-
-1. Open Task Manager (`Ctrl + Shift + Esc`)
-2. Find "Python" processes
-3. Right-click → End Task
 
 ### Check if It's Running
 
 ```powershell
 # List all Python processes
 Get-Process python
+
+# More detailed view
+Get-Process | Where-Object {$_.ProcessName -eq "python"}
 ```
+
+### Important: Closing PowerShell Window
+
+- **Visible console mode** (`python nvidia_stock_checker.py --monitor`): Script **stops** if you close the window. Minimize it instead!
+- **Hidden mode** (`Start-Process ... -WindowStyle Hidden`): Script **keeps running** even if you close PowerShell
 
 ## Running on Startup (Optional)
 
@@ -255,9 +299,9 @@ python nvidia_stock_checker.py --monitor --interval 30
 python nvidia_stock_checker.py --url "https://marketplace.nvidia.com/en-us/..." --monitor
 ```
 
-### Enable Multiple Notifications
+### Enable Multiple Notifications (Recommended!)
 
-Edit `notification_config.json` to enable multiple methods:
+For maximum coverage, enable **both Telegram and desktop** notifications:
 
 ```json
 {
@@ -266,6 +310,30 @@ Edit `notification_config.json` to enable multiple methods:
     "bot_token": "YOUR_BOT_TOKEN",
     "chat_id": "YOUR_CHAT_ID"
   },
+  "desktop": {
+    "enabled": true
+  },
+  "email": {
+    "enabled": false
+  }
+}
+```
+
+Then install desktop notification support:
+```powershell
+pip install plyer
+```
+
+**Why enable both?**
+- At your PC: Desktop popup appears immediately
+- Away from PC: Telegram notifies your phone
+- Redundancy: If one fails, you still get the other
+
+**Add email too (optional):**
+
+Edit `notification_config.json`:
+```json
+{
   "email": {
     "enabled": true,
     "smtp_server": "smtp.gmail.com",
@@ -273,16 +341,11 @@ Edit `notification_config.json` to enable multiple methods:
     "sender_email": "your-email@gmail.com",
     "sender_password": "your-gmail-app-password",
     "recipient_email": "your-email@gmail.com"
-  },
-  "desktop": {
-    "enabled": true
   }
 }
 ```
 
 **For Gmail**: Create an App Password at https://myaccount.google.com/apppasswords
-
-**For desktop notifications**: Install `pip install plyer`
 
 ## Troubleshooting
 
@@ -390,29 +453,39 @@ python3 nvidia_stock_checker.py --monitor
 usage: nvidia_stock_checker.py [-h] [--url URL] [--monitor]
                                [--interval INTERVAL] [--duration DURATION]
                                [--no-headless] [--notify-config NOTIFY_CONFIG]
-                               [--create-notify-config]
+                               [--create-notify-config] [--test-notification]
 
 Options:
   -h, --help            Show help message
   --url URL             URL to check (default: RTX 5090 Founders Edition)
   --monitor             Continuously monitor instead of single check
-  --interval INTERVAL   Check interval in seconds (default: 300)
+  --interval INTERVAL   Check interval in seconds (default: 10, randomized ±20%)
   --duration DURATION   Total monitoring duration in seconds (default: infinite)
   --no-headless         Show browser window (useful for debugging)
   --notify-config FILE  Path to notification config file
   --create-notify-config Create sample notification config and exit
+  --test-notification   Send a test notification and exit
 ```
 
 ## Examples
 
 ```powershell
+# Test notifications (do this first!)
+python nvidia_stock_checker.py --test-notification
+
 # Single check
 python nvidia_stock_checker.py
 
-# Monitor with default settings (every 10 seconds, randomized)
+# Monitor with visible console (default: 10 seconds, randomized)
 python nvidia_stock_checker.py --monitor
 
-# Monitor every 2 minutes
+# Monitor completely hidden in background
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
+
+# Monitor in separate window with live updates
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Normal
+
+# Monitor every 2 minutes instead
 python nvidia_stock_checker.py --monitor --interval 120
 
 # Monitor for 1 hour only
@@ -420,9 +493,6 @@ python nvidia_stock_checker.py --monitor --duration 3600
 
 # Monitor with visible browser (debugging)
 python nvidia_stock_checker.py --monitor --no-headless
-
-# Run in background (Windows)
-Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
 
 # Run in background (Linux/macOS)
 nohup python3 nvidia_stock_checker.py --monitor > output.log 2>&1 &
