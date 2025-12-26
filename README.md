@@ -8,7 +8,7 @@ Automatically monitor the NVIDIA Marketplace for RTX 5090 Founders Edition stock
 - 🤖 **Automated monitoring** - runs in background 24/7
 - 🔍 **Multiple detection methods** for reliable stock checking
 - 📊 **Detailed logging** of all checks and status changes
-- ⚙️ **Configurable check intervals** (default: every 5 minutes)
+- ⚙️ **Configurable check intervals** (default: every 10 seconds with randomization)
 - 🌐 **Multiple notification options** (Telegram, email, desktop, Discord, webhooks)
 - 🖥️ **Headless mode** for efficient background operation
 
@@ -178,7 +178,7 @@ notepad stock_checker.log
 Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
 ```
 
-**That's it!** The script is now running in the background, checking every 5 minutes. When the RTX 5090 comes in stock, you'll get an instant Telegram message on your phone!
+**That's it!** The script is now running in the background, checking every 10 seconds (randomized 8-12 seconds to avoid detection). When the RTX 5090 comes in stock, you'll get an instant Telegram message on your phone!
 
 ## Managing the Background Process
 
@@ -409,7 +409,7 @@ Options:
 # Single check
 python nvidia_stock_checker.py
 
-# Monitor with default settings (every 5 minutes)
+# Monitor with default settings (every 10 seconds, randomized)
 python nvidia_stock_checker.py --monitor
 
 # Monitor every 2 minutes
@@ -455,12 +455,22 @@ Time: 2025-12-26T10:30:45
 Go buy it now!
 ```
 
+### Notification Speed
+
+With the default 10-second interval:
+- **Average notification time**: ~15-20 seconds after stock appears
+- **Worst case**: ~22 seconds
+- **Best case**: ~7-12 seconds
+
+The script checks every 8-12 seconds (randomized to avoid bot detection), so you'll be notified within about 15-20 seconds on average - **much faster than manual checking!**
+
 ## Important Notes
 
 ### Rate Limiting
-- Don't set check intervals too low (recommended minimum: 60 seconds)
-- NVIDIA may rate-limit or block excessive requests
-- Default 5 minutes (300 seconds) is safe and effective
+- Default 10 seconds (randomized 8-12s) balances speed with safety
+- Randomization helps avoid detection patterns
+- NVIDIA may rate-limit or block if you go much faster
+- Script includes anti-bot measures (random user agents, scrolling, timing)
 
 ### Resource Usage
 - Headless mode uses ~200-300 MB RAM per Chrome instance
