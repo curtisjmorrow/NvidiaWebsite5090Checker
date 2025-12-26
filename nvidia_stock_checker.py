@@ -162,15 +162,24 @@ class NvidiaStockChecker:
         Returns:
             dict: Detection results with in_stock boolean, text, and method used
         """
+        # Log page title for debugging
+        try:
+            page_title = self.driver.title
+            logger.debug(f"Page title: {page_title}")
+        except:
+            pass
+
         # Method 1: Look for "Add to Cart" or "Buy Now" button
         try:
             add_to_cart_selectors = [
-                "//button[contains(text(), 'Add to Cart')]",
-                "//button[contains(text(), 'Buy Now')]",
-                "//a[contains(text(), 'Add to Cart')]",
-                "//a[contains(text(), 'Buy Now')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'add to cart')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'buy now')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'add to cart')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'buy now')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'add to bag')]",
                 "//*[@id='add-to-cart']",
-                "//button[contains(@class, 'add-to-cart')]"
+                "//button[contains(@class, 'add-to-cart')]",
+                "//button[contains(@class, 'buy-button')]"
             ]
 
             for selector in add_to_cart_selectors:
@@ -188,37 +197,40 @@ class NvidiaStockChecker:
         except Exception as e:
             logger.debug(f"Error in purchase button detection: {e}")
 
-        # Method 2: Look for "Out of Stock" or similar text
+        # Method 2: Look for "Out of Stock" or similar text (case-insensitive)
         try:
             out_of_stock_selectors = [
-                "//*[contains(text(), 'Out of Stock')]",
-                "//*[contains(text(), 'OUT OF STOCK')]",
-                "//*[contains(text(), 'Sold Out')]",
-                "//*[contains(text(), 'Not Available')]",
-                "//*[contains(text(), 'Currently Unavailable')]",
-                "//button[@disabled and contains(text(), 'Notify Me')]"
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'out of stock')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sold out')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'not available')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'currently unavailable')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'notify me')]",
+                "//button[@disabled]"
             ]
 
             for selector in out_of_stock_selectors:
                 try:
-                    element = self.driver.find_element(By.XPATH, selector)
-                    if element.is_displayed():
-                        logger.info(f"Found out of stock indicator: {element.text}")
-                        return {
-                            'in_stock': False,
-                            'text': element.text,
-                            'method': 'out_of_stock_text'
-                        }
+                    elements = self.driver.find_elements(By.XPATH, selector)
+                    for element in elements:
+                        if element.is_displayed():
+                            element_text = element.text.strip()
+                            if element_text:  # Only if there's actual text
+                                logger.info(f"Found out of stock indicator: {element_text}")
+                                return {
+                                    'in_stock': False,
+                                    'text': element_text,
+                                    'method': 'out_of_stock_text'
+                                }
                 except NoSuchElementException:
                     continue
         except Exception as e:
             logger.debug(f"Error in out of stock detection: {e}")
 
-        # Method 3: Look for "In Stock" text
+        # Method 3: Look for "In Stock" text (case-insensitive)
         try:
             in_stock_selectors = [
-                "//*[contains(text(), 'In Stock')]",
-                "//*[contains(text(), 'Available')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'in stock')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'available now')]",
                 "//*[contains(@class, 'in-stock')]"
             ]
 
@@ -237,30 +249,52 @@ class NvidiaStockChecker:
         except Exception as e:
             logger.debug(f"Error in stock detection: {e}")
 
-        # Method 4: Save page source for manual inspection
-        page_text = self.driver.page_source.lower()
-        logger.debug("Checking page source for stock keywords")
+        # Method 4: Check page source for keywords
+        try:
+            page_text = self.driver.page_source.lower()
+            logger.debug("Checking page source for stock keywords")
 
-        # Check for common stock indicators in page source
-        if 'out of stock' in page_text or 'sold out' in page_text:
-            return {
-                'in_stock': False,
-                'text': 'Out of stock (detected in page source)',
-                'method': 'page_source'
-            }
+            # Check for common stock indicators in page source
+            if 'out of stock' in page_text or 'sold out' in page_text or 'notify me' in page_text:
+                return {
+                    'in_stock': False,
+                    'text': 'Out of stock (detected in page source)',
+                    'method': 'page_source'
+                }
 
-        if 'add to cart' in page_text or 'buy now' in page_text:
-            return {
-                'in_stock': True,
-                'text': 'Possibly in stock (detected in page source)',
-                'method': 'page_source'
-            }
+            if 'add to cart' in page_text or 'buy now' in page_text or 'add to bag' in page_text:
+                # Look for disabled state
+                if 'disabled' in page_text or 'button disabled' in page_text:
+                    return {
+                        'in_stock': False,
+                        'text': 'Button found but disabled (likely out of stock)',
+                        'method': 'page_source_disabled'
+                    }
+                return {
+                    'in_stock': True,
+                    'text': 'Possibly in stock (detected in page source)',
+                    'method': 'page_source'
+                }
+        except Exception as e:
+            logger.debug(f"Error checking page source: {e}")
 
-        # Save screenshot for debugging
+        # Save screenshot for debugging and log more info
         try:
             screenshot_path = f'screenshot_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png'
             self.driver.save_screenshot(screenshot_path)
-            logger.info(f"Screenshot saved to {screenshot_path}")
+            logger.warning(f"Unable to determine status - Screenshot saved to {screenshot_path}")
+
+            # Log page title and URL for debugging
+            logger.warning(f"Current URL: {self.driver.current_url}")
+            logger.warning(f"Page title: {self.driver.title}")
+
+            # Log a snippet of visible text
+            try:
+                body_text = self.driver.find_element(By.TAG_NAME, "body").text[:500]
+                logger.debug(f"Page text (first 500 chars): {body_text}")
+            except:
+                pass
+
         except Exception as e:
             logger.debug(f"Could not save screenshot: {e}")
 
