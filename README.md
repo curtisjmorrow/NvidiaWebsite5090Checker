@@ -54,26 +54,72 @@ pip install requests
 
 ## Quick Start
 
-### Single Check
-Check stock once and exit:
-```bash
-python nvidia_stock_checker.py
-```
+### Windows 11 Setup
 
-### Continuous Monitoring
-Monitor continuously (checks every 5 minutes by default):
-```bash
-python nvidia_stock_checker.py --monitor
-```
+1. **Install Python** (if not already installed):
+   - Download from [python.org](https://www.python.org/downloads/)
+   - During installation, check "Add Python to PATH"
 
-### Custom Check Interval
-Monitor with custom interval (e.g., every 2 minutes = 120 seconds):
+2. **Install ChromeDriver**:
+   ```powershell
+   # Option 1: Using winget (Windows Package Manager)
+   winget install Google.Chrome
+   winget install Chromium.ChromeDriver
+
+   # Option 2: Manual installation
+   # 1. Check your Chrome version: chrome://version in browser
+   # 2. Download matching ChromeDriver from https://chromedriver.chromium.org/downloads
+   # 3. Extract chromedriver.exe to C:\Program Files\ChromeDriver\
+   # 4. Add C:\Program Files\ChromeDriver\ to your PATH environment variable
+   ```
+
+3. **Install Python dependencies**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. **Run the checker**:
+   ```powershell
+   # Single check
+   python nvidia_stock_checker.py
+
+   # Continuous monitoring (every 5 minutes)
+   python nvidia_stock_checker.py --monitor
+   ```
+
+### Linux/macOS Setup
+
+1. **Install ChromeDriver**:
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install chromium-chromedriver
+
+   # macOS
+   brew install chromedriver
+   ```
+
+2. **Install Python dependencies**:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
+3. **Run the checker**:
+   ```bash
+   # Single check
+   python3 nvidia_stock_checker.py
+
+   # Continuous monitoring (every 5 minutes)
+   python3 nvidia_stock_checker.py --monitor
+   ```
+
+### Common Commands (All Platforms)
+
+**Custom Check Interval** (e.g., every 2 minutes = 120 seconds):
 ```bash
 python nvidia_stock_checker.py --monitor --interval 120
 ```
 
-### Visible Browser Mode
-Run with visible browser window (useful for debugging):
+**Visible Browser Mode** (useful for debugging):
 ```bash
 python nvidia_stock_checker.py --monitor --no-headless
 ```
@@ -223,15 +269,66 @@ python nvidia_stock_checker.py --monitor
 # Reattach with: screen -r nvidia-checker
 ```
 
-### Run with Task Scheduler (Windows)
+### Run in Background (Windows PowerShell)
 
-1. Open Task Scheduler
-2. Create Basic Task
-3. Set trigger (e.g., "At startup")
-4. Action: Start a program
-   - Program: `python.exe`
-   - Arguments: `C:\path\to\nvidia_stock_checker.py --monitor`
+**Option 1: Start-Process (Simple background)**
+```powershell
+# Run in background (new window, minimized)
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Minimized
+
+# Or run completely hidden
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
+```
+
+**Option 2: Run as background job**
+```powershell
+# Start as background job
+Start-Job -ScriptBlock { python nvidia_stock_checker.py --monitor }
+
+# Check job status
+Get-Job
+
+# View job output
+Receive-Job -Id 1 -Keep
+```
+
+**Option 3: Using pythonw.exe (no console window)**
+```powershell
+pythonw nvidia_stock_checker.py --monitor
+```
+
+### Run with Task Scheduler (Windows - persistent service)
+
+For running automatically on startup or on a schedule:
+
+1. **Open Task Scheduler**:
+   - Press `Win + R`, type `taskschd.msc`, press Enter
+
+2. **Create Basic Task**:
+   - Click "Create Basic Task" in the right panel
+   - Name: "NVIDIA Stock Checker"
+   - Description: "Monitor NVIDIA RTX 5090 stock availability"
+
+3. **Set Trigger**:
+   - Choose "When the computer starts" or "When I log on"
+   - Click Next
+
+4. **Set Action**:
+   - Select "Start a program"
+   - Program/script: `python.exe` (or full path: `C:\Users\YourName\AppData\Local\Programs\Python\Python311\python.exe`)
+   - Add arguments: `nvidia_stock_checker.py --monitor`
    - Start in: `C:\path\to\NvidiaWebsite5090Checker`
+   - Click Next and Finish
+
+5. **Advanced Settings** (optional):
+   - Right-click the task > Properties
+   - Under "General" tab: Check "Run whether user is logged on or not"
+   - Under "Settings" tab: Check "Run task as soon as possible after a scheduled start is missed"
+   - Under "Settings" tab: Check "If the task fails, restart every: 1 minute"
+
+6. **Test the Task**:
+   - Right-click the task and select "Run"
+   - Check the log file to verify it's working
 
 ## Command-Line Options
 
