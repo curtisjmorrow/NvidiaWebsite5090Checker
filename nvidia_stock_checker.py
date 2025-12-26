@@ -383,6 +383,11 @@ def main():
         action='store_true',
         help='Create sample notification configuration file and exit'
     )
+    parser.add_argument(
+        '--test-notification',
+        action='store_true',
+        help='Send a test notification and exit'
+    )
 
     args = parser.parse_args()
 
@@ -394,6 +399,43 @@ def main():
             print("Edit this file to configure your notification preferences.")
         else:
             print("Error: Notifier module not available")
+        sys.exit(0)
+
+    # Handle test notification
+    if args.test_notification:
+        if not Notifier:
+            print("Error: Notifier module not available")
+            sys.exit(1)
+
+        if not os.path.exists(args.notify_config):
+            print(f"Error: Notification config not found at {args.notify_config}")
+            print("Run with --create-notify-config first")
+            sys.exit(1)
+
+        config = load_config_from_file(args.notify_config)
+        notifier = Notifier(config)
+
+        test_message = """
+This is a TEST notification from your NVIDIA Stock Checker!
+
+If you're seeing this on your phone, your notifications are working correctly!
+
+Time: {timestamp}
+""".format(timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+        print("Sending test notification...")
+        success = notifier.notify(
+            message=test_message,
+            title="Test Notification - Stock Checker"
+        )
+
+        if success:
+            print("✓ Test notification sent successfully!")
+            print("Check your phone/desktop for the notification.")
+        else:
+            print("✗ Failed to send test notification.")
+            print("Check the logs above for error details.")
+
         sys.exit(0)
 
     # Load notification config
