@@ -516,14 +516,18 @@ nohup python3 nvidia_stock_checker.py --monitor > output.log 2>&1 &
 When the RTX 5090 is in stock, you'll get a Telegram message like:
 
 ```
-RTX 5090 IN STOCK!
+🚨 RTX 5090 IS IN STOCK! 🚨
 
 Status: Add to Cart
-URL: https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/
 Time: 2025-12-26T10:30:45
 
-Go buy it now!
+👉 BUY NOW:
+https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/
+
+Click the link above to purchase immediately!
 ```
+
+**The URL is automatically clickable** - just tap it on your phone to go straight to the purchase page!
 
 ### Notification Speed
 
