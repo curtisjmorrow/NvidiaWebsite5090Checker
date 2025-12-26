@@ -455,6 +455,16 @@ def main():
         help='URL to check (can be specified multiple times for multiple sites)'
     )
     parser.add_argument(
+        '--no-nvidia',
+        action='store_true',
+        help='Exclude NVIDIA from default URLs (only monitor Best Buy)'
+    )
+    parser.add_argument(
+        '--no-bestbuy',
+        action='store_true',
+        help='Exclude Best Buy from default URLs (only monitor NVIDIA)'
+    )
+    parser.add_argument(
         '--monitor',
         action='store_true',
         help='Continuously monitor instead of single check'
@@ -552,11 +562,28 @@ Time: {timestamp}
 
     # Set default URLs if none provided
     if args.url is None:
-        urls = [
-            'https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/',
-            'https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/6604067.p'
-        ]
-        logger.info("No URLs specified, using default: NVIDIA + Best Buy")
+        urls = []
+
+        # Add NVIDIA unless excluded
+        if not args.no_nvidia:
+            urls.append('https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/')
+
+        # Add Best Buy unless excluded
+        if not args.no_bestbuy:
+            urls.append('https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/6604067.p')
+
+        # Make sure at least one URL is enabled
+        if not urls:
+            print("Error: Cannot exclude both NVIDIA and Best Buy. At least one site must be monitored.")
+            sys.exit(1)
+
+        # Log which sites are being monitored
+        site_names = []
+        if not args.no_nvidia:
+            site_names.append("NVIDIA")
+        if not args.no_bestbuy:
+            site_names.append("Best Buy")
+        logger.info(f"Monitoring: {' + '.join(site_names)}")
     else:
         urls = args.url
 
