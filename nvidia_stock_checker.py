@@ -247,7 +247,10 @@ class NvidiaStockChecker:
                 "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'not available')]",
                 "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'currently unavailable')]",
                 "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'notify me')]",
-                "//button[@disabled]"
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'coming soon')]",
+                "//button[@disabled]",
+                "//button[contains(@class, 'sold-out')]",
+                "//button[contains(@class, 'soldout')]"
             ]
 
             for selector in out_of_stock_selectors:
@@ -297,7 +300,7 @@ class NvidiaStockChecker:
             logger.debug("Checking page source for stock keywords")
 
             # Check for common stock indicators in page source
-            if 'out of stock' in page_text or 'sold out' in page_text or 'notify me' in page_text:
+            if 'out of stock' in page_text or 'sold out' in page_text or 'notify me' in page_text or 'coming soon' in page_text:
                 return {
                     'in_stock': False,
                     'text': 'Out of stock (detected in page source)',
