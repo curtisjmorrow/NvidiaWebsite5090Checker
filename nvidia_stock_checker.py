@@ -554,7 +554,7 @@ Time: {timestamp}
     if args.url is None:
         urls = [
             'https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/',
-            'https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/6604067.p'
+            'https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/6604067'
         ]
         logger.info("No URLs specified, using default: NVIDIA + Best Buy")
     else:
