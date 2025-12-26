@@ -1,161 +1,513 @@
 # NVIDIA RTX 5090 Stock Checker
 
-A Python script that automatically monitors the NVIDIA Marketplace for RTX 5090 Founders Edition stock availability and sends notifications when the card becomes available.
+Automatically monitor the NVIDIA Marketplace for RTX 5090 Founders Edition stock and get instant notifications on your phone when it's available!
 
 ## Features
 
-- Automated stock checking using Selenium WebDriver
-- Multiple notification methods (email, desktop, Telegram, Discord, webhooks)
-- Continuous monitoring mode for unattended operation
-- Detailed logging to file and console
-- Screenshot capture for debugging
-- Multiple detection methods for stock status
-- Configurable check intervals
-- Headless or visible browser modes
+- 📱 **Instant phone notifications** via Telegram
+- 🤖 **Automated monitoring** - runs in background 24/7
+- 🔍 **Multiple detection methods** for reliable stock checking
+- 📊 **Detailed logging** of all checks and status changes
+- ⚙️ **Configurable check intervals** (default: every 5 minutes)
+- 🌐 **Multiple notification options** (Telegram, email, desktop, Discord, webhooks)
+- 🖥️ **Headless mode** for efficient background operation
 
-## Requirements
+## Quick Start for Windows 11
 
-- Python 3.7 or higher
-- Chrome/Chromium browser
-- ChromeDriver (matching your Chrome version)
+This guide will get you up and running in about 10 minutes with Telegram notifications on your phone.
 
-## Installation
+### Prerequisites Check
 
-### 1. Install ChromeDriver
+**Do you have Python installed?**
+```powershell
+python --version
+```
+If you see a version number (3.7+), skip to Step 2. Otherwise, continue:
 
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt-get update
-sudo apt-get install chromium-chromedriver
+**Install Python:**
+1. Download from https://www.python.org/downloads/
+2. Run installer
+3. ✅ **IMPORTANT**: Check "Add Python to PATH" during installation
+4. Click "Install Now"
+5. Restart PowerShell after installation
+
+**Do you have Git installed?**
+```powershell
+git --version
+```
+If you see a version number, skip to Step 1. Otherwise:
+- Download from https://git-scm.com/download/win
+- Install with default settings
+
+### Step 1: Download the Project
+
+Open PowerShell (`Win + X` → "Windows PowerShell" or "Terminal"):
+
+```powershell
+# Navigate to your Documents folder
+cd $HOME\Documents
+
+# Download the project
+git clone https://github.com/curtisjmorrow/NvidiaWebsite5090Checker.git
+cd NvidiaWebsite5090Checker
 ```
 
-**macOS (with Homebrew):**
-```bash
-brew install chromedriver
+### Step 2: Install ChromeDriver
+
+Choose one method:
+
+**Option A: Using winget (Easiest)**
+```powershell
+winget install Google.Chrome
+winget install Chromium.ChromeDriver
 ```
 
-**Windows:**
-Download from [ChromeDriver Downloads](https://chromedriver.chromium.org/downloads) and add to PATH.
+**Option B: Manual Installation**
+1. Open Chrome and go to `chrome://version`
+2. Note your Chrome version (e.g., "120.0.6099.109")
+3. Download matching ChromeDriver from https://chromedriver.chromium.org/downloads
+4. Extract `chromedriver.exe` to `C:\Program Files\ChromeDriver\`
+5. Add to PATH:
+   ```powershell
+   # Run PowerShell as Administrator
+   $env:Path += ";C:\Program Files\ChromeDriver\"
+   [Environment]::SetEnvironmentVariable("Path", $env:Path, [EnvironmentVariableTarget]::Machine)
+   ```
+6. Restart PowerShell
 
-### 2. Install Python Dependencies
+**Verify ChromeDriver:**
+```powershell
+chromedriver --version
+# Should show: ChromeDriver 120.0.6099.109 (or similar)
+```
 
-```bash
+### Step 3: Install Python Dependencies
+
+```powershell
+# Install Selenium (required)
 pip install -r requirements.txt
-```
 
-For additional notification features, uncomment and install optional dependencies in `requirements.txt`:
-```bash
-# For desktop notifications
-pip install plyer
-
-# For Telegram/Discord/Webhook notifications
+# Install requests for Telegram notifications (required for phone alerts)
 pip install requests
 ```
 
-## Quick Start
+### Step 4: Set Up Telegram Notifications
 
-### Windows 11 Setup
+This is the best way to get notified on your phone!
 
-1. **Install Python** (if not already installed):
-   - Download from [python.org](https://www.python.org/downloads/)
-   - During installation, check "Add Python to PATH"
+#### 4.1 Install Telegram
 
-2. **Install ChromeDriver**:
-   ```powershell
-   # Option 1: Using winget (Windows Package Manager)
-   winget install Google.Chrome
-   winget install Chromium.ChromeDriver
+- **iPhone**: https://apps.apple.com/app/telegram-messenger/id686449807
+- **Android**: https://play.google.com/store/apps/details?id=org.telegram.messenger
 
-   # Option 2: Manual installation
-   # 1. Check your Chrome version: chrome://version in browser
-   # 2. Download matching ChromeDriver from https://chromedriver.chromium.org/downloads
-   # 3. Extract chromedriver.exe to C:\Program Files\ChromeDriver\
-   # 4. Add C:\Program Files\ChromeDriver\ to your PATH environment variable
+#### 4.2 Create Your Bot
+
+1. Open Telegram and search for `@BotFather`
+2. Send: `/start`
+3. Send: `/newbot`
+4. Choose a name: `Stock Alert` (or anything you like)
+5. Choose a username: `mystockalert_bot` (must be unique and end with `_bot`)
+6. **Copy the bot token** - looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
+
+#### 4.3 Get Your Chat ID
+
+1. Search for your bot in Telegram (use the username you created)
+2. Send it any message (just say "hi")
+3. Open this URL in your browser (replace `YOUR_BOT_TOKEN` with your actual token):
    ```
-
-3. **Install Python dependencies**:
-   ```powershell
-   pip install -r requirements.txt
+   https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
    ```
+4. Look for `"chat":{"id":987654321` in the response
+5. **Copy that number** - this is your Chat ID
 
-4. **Run the checker**:
-   ```powershell
-   # Single check
-   python nvidia_stock_checker.py
+#### 4.4 Configure Notifications
 
-   # Continuous monitoring (every 5 minutes)
-   python nvidia_stock_checker.py --monitor
-   ```
-
-### Linux/macOS Setup
-
-1. **Install ChromeDriver**:
-   ```bash
-   # Ubuntu/Debian
-   sudo apt-get install chromium-chromedriver
-
-   # macOS
-   brew install chromedriver
-   ```
-
-2. **Install Python dependencies**:
-   ```bash
-   pip3 install -r requirements.txt
-   ```
-
-3. **Run the checker**:
-   ```bash
-   # Single check
-   python3 nvidia_stock_checker.py
-
-   # Continuous monitoring (every 5 minutes)
-   python3 nvidia_stock_checker.py --monitor
-   ```
-
-### Common Commands (All Platforms)
-
-**Custom Check Interval** (e.g., every 2 minutes = 120 seconds):
-```bash
-python nvidia_stock_checker.py --monitor --interval 120
-```
-
-**Visible Browser Mode** (useful for debugging):
-```bash
-python nvidia_stock_checker.py --monitor --no-headless
-```
-
-## Notification Setup
-
-### Recommended: Telegram (Phone Notifications!)
-
-**For detailed Telegram setup instructions, see [TELEGRAM_SETUP.md](TELEGRAM_SETUP.md)**
-
-Telegram is the best option for getting notified on your phone while away from your PC:
-- ✅ Free and instant push notifications
-- ✅ Works on iPhone, Android, desktop
-- ✅ Takes 2-3 minutes to set up
-- ✅ More reliable than email
-
-Quick steps:
-1. Create a bot with @BotFather
-2. Get your bot token and chat ID
-3. Install requests: `pip install requests`
-4. Configure notification_config.json with your details
-
-### All Notification Options
-
-**1. Create Notification Configuration**
-```bash
+```powershell
+# Create notification config file
 python nvidia_stock_checker.py --create-notify-config
+
+# Edit the config file
+notepad notification_config.json
 ```
 
-This creates a `notification_config.json` file with sample settings.
+**Replace the telegram section** with your information:
+```json
+{
+  "telegram": {
+    "enabled": true,
+    "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+    "chat_id": "987654321"
+  },
+  "desktop": {
+    "enabled": false
+  },
+  "email": {
+    "enabled": false
+  }
+}
+```
 
-**2. Edit Configuration**
+Replace:
+- `123456789:ABCdefGHIjklMNOpqrsTUVwxyz` with YOUR bot token
+- `987654321` with YOUR chat ID
 
-Edit `notification_config.json` to enable and configure your preferred notification methods:
+Save and close Notepad.
 
-#### Email Notifications
+### Step 5: Test the Script
+
+```powershell
+# Run a quick test (visible browser window)
+python nvidia_stock_checker.py --no-headless
+```
+
+You should see:
+- Chrome browser opens
+- Script loads the NVIDIA page
+- Logs show "Out of stock" or current status
+- Browser closes
+
+Check the log file to verify Telegram is configured:
+```powershell
+notepad stock_checker.log
+```
+
+### Step 6: Start Monitoring
+
+**Run in background (hidden):**
+```powershell
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
+```
+
+**That's it!** The script is now running in the background, checking every 5 minutes. When the RTX 5090 comes in stock, you'll get an instant Telegram message on your phone!
+
+## Managing the Background Process
+
+### View the Log
+
+```powershell
+# Open log file
+notepad stock_checker.log
+
+# View in real-time
+Get-Content stock_checker.log -Wait
+```
+
+### Stop the Script
+
+1. Open Task Manager (`Ctrl + Shift + Esc`)
+2. Find "Python" processes
+3. Right-click → End Task
+
+### Check if It's Running
+
+```powershell
+# List all Python processes
+Get-Process python
+```
+
+## Running on Startup (Optional)
+
+To have the script start automatically when Windows starts:
+
+### Method 1: Task Scheduler (Recommended)
+
+1. Press `Win + R`, type `taskschd.msc`, press Enter
+2. Click "Create Basic Task"
+3. Name: "NVIDIA Stock Checker"
+4. Trigger: "When I log on"
+5. Action: "Start a program"
+   - Program: `python.exe`
+   - Arguments: `nvidia_stock_checker.py --monitor`
+   - Start in: `C:\Users\YourName\Documents\NvidiaWebsite5090Checker`
+6. Finish and test by right-clicking the task → Run
+
+### Method 2: Startup Folder
+
+Create a `.bat` file:
+```batch
+@echo off
+cd C:\Users\YourName\Documents\NvidiaWebsite5090Checker
+pythonw nvidia_stock_checker.py --monitor
+```
+
+Save as `start_stock_checker.bat` and place in:
+```
+C:\Users\YourName\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+```
+
+## Customization
+
+### Change Check Interval
+
+```powershell
+# Check every 2 minutes (120 seconds)
+python nvidia_stock_checker.py --monitor --interval 120
+
+# Check every 30 seconds (faster, but more resource intensive)
+python nvidia_stock_checker.py --monitor --interval 30
+```
+
+**Recommended**: Keep interval at 60 seconds or higher to avoid rate limiting.
+
+### Check Different Product
+
+```powershell
+python nvidia_stock_checker.py --url "https://marketplace.nvidia.com/en-us/..." --monitor
+```
+
+### Enable Multiple Notifications
+
+Edit `notification_config.json` to enable multiple methods:
+
+```json
+{
+  "telegram": {
+    "enabled": true,
+    "bot_token": "YOUR_BOT_TOKEN",
+    "chat_id": "YOUR_CHAT_ID"
+  },
+  "email": {
+    "enabled": true,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "your-email@gmail.com",
+    "sender_password": "your-gmail-app-password",
+    "recipient_email": "your-email@gmail.com"
+  },
+  "desktop": {
+    "enabled": true
+  }
+}
+```
+
+**For Gmail**: Create an App Password at https://myaccount.google.com/apppasswords
+
+**For desktop notifications**: Install `pip install plyer`
+
+## Troubleshooting
+
+### "python is not recognized"
+- Python isn't installed or not in PATH
+- Reinstall Python and check "Add Python to PATH"
+- Restart PowerShell
+
+### "chromedriver is not recognized"
+- ChromeDriver isn't in PATH
+- Run: `chromedriver --version` to test
+- Reinstall using winget or add to PATH manually
+- Restart PowerShell
+
+### "No module named 'selenium'"
+```powershell
+pip install selenium
+```
+
+### "Failed to send Telegram notification"
+- Verify bot token is correct (should include `:`)
+- Verify chat ID is correct (just numbers)
+- Make sure you sent your bot a message first
+- Check: `pip install requests`
+
+### Script says "Unable to determine stock status"
+- Check `screenshot_*.png` files to see what the page looks like
+- The website structure may have changed
+- Check `stock_checker.log` for details
+
+### Chrome/ChromeDriver version mismatch
+```
+This version of ChromeDriver only supports Chrome version X
+```
+- Update Chrome: `winget upgrade Google.Chrome`
+- Update ChromeDriver: `winget upgrade Chromium.ChromeDriver`
+- Or download matching version from https://chromedriver.chromium.org/downloads
+
+### Script stops running
+- Check Task Manager to see if it crashed
+- Check `stock_checker.log` for errors
+- Use Task Scheduler to auto-restart on failure
+
+## Linux / macOS Setup
+
+<details>
+<summary>Click to expand Linux/macOS instructions</summary>
+
+### Linux (Ubuntu/Debian)
+
+```bash
+# Clone repository
+git clone https://github.com/curtisjmorrow/NvidiaWebsite5090Checker.git
+cd NvidiaWebsite5090Checker
+
+# Install ChromeDriver
+sudo apt-get update
+sudo apt-get install chromium-chromedriver
+
+# Install dependencies
+pip3 install -r requirements.txt
+pip3 install requests
+
+# Set up Telegram (same as Windows steps 4.2-4.4)
+python3 nvidia_stock_checker.py --create-notify-config
+nano notification_config.json
+
+# Run
+python3 nvidia_stock_checker.py --monitor
+
+# Run in background with screen
+screen -S nvidia-checker
+python3 nvidia_stock_checker.py --monitor
+# Press Ctrl+A then D to detach
+# Reattach: screen -r nvidia-checker
+```
+
+### macOS
+
+```bash
+# Clone repository
+git clone https://github.com/curtisjmorrow/NvidiaWebsite5090Checker.git
+cd NvidiaWebsite5090Checker
+
+# Install ChromeDriver
+brew install chromedriver
+
+# Install dependencies
+pip3 install -r requirements.txt
+pip3 install requests
+
+# Set up Telegram (same as Windows steps 4.2-4.4)
+python3 nvidia_stock_checker.py --create-notify-config
+nano notification_config.json
+
+# Run
+python3 nvidia_stock_checker.py --monitor
+```
+
+</details>
+
+## Command-Line Options
+
+```
+usage: nvidia_stock_checker.py [-h] [--url URL] [--monitor]
+                               [--interval INTERVAL] [--duration DURATION]
+                               [--no-headless] [--notify-config NOTIFY_CONFIG]
+                               [--create-notify-config]
+
+Options:
+  -h, --help            Show help message
+  --url URL             URL to check (default: RTX 5090 Founders Edition)
+  --monitor             Continuously monitor instead of single check
+  --interval INTERVAL   Check interval in seconds (default: 300)
+  --duration DURATION   Total monitoring duration in seconds (default: infinite)
+  --no-headless         Show browser window (useful for debugging)
+  --notify-config FILE  Path to notification config file
+  --create-notify-config Create sample notification config and exit
+```
+
+## Examples
+
+```powershell
+# Single check
+python nvidia_stock_checker.py
+
+# Monitor with default settings (every 5 minutes)
+python nvidia_stock_checker.py --monitor
+
+# Monitor every 2 minutes
+python nvidia_stock_checker.py --monitor --interval 120
+
+# Monitor for 1 hour only
+python nvidia_stock_checker.py --monitor --duration 3600
+
+# Monitor with visible browser (debugging)
+python nvidia_stock_checker.py --monitor --no-headless
+
+# Run in background (Windows)
+Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
+
+# Run in background (Linux/macOS)
+nohup python3 nvidia_stock_checker.py --monitor > output.log 2>&1 &
+```
+
+## How It Works
+
+1. **Browser Automation**: Uses Selenium WebDriver to load the NVIDIA Marketplace page like a real browser
+2. **Stock Detection**: Checks for multiple indicators:
+   - "Add to Cart" or "Buy Now" buttons (in stock)
+   - "Out of Stock" or "Sold Out" text (out of stock)
+   - "In Stock" text (in stock)
+   - Page source analysis as fallback
+3. **Notification**: When stock is detected, sends alerts via configured methods
+4. **Continuous Monitoring**: Repeats checks at specified intervals
+5. **Logging**: Records all checks, status changes, and errors to `stock_checker.log`
+6. **Screenshots**: Captures page screenshots when status is unclear for debugging
+
+## What You'll Receive
+
+When the RTX 5090 is in stock, you'll get a Telegram message like:
+
+```
+RTX 5090 IN STOCK!
+
+Status: Add to Cart
+URL: https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/
+Time: 2025-12-26T10:30:45
+
+Go buy it now!
+```
+
+## Important Notes
+
+### Rate Limiting
+- Don't set check intervals too low (recommended minimum: 60 seconds)
+- NVIDIA may rate-limit or block excessive requests
+- Default 5 minutes (300 seconds) is safe and effective
+
+### Resource Usage
+- Headless mode uses ~200-300 MB RAM per Chrome instance
+- Each check takes 5-10 seconds
+- Log file grows over time (safe to delete periodically)
+
+### Privacy & Security
+- `notification_config.json` contains sensitive credentials
+- Never commit or share this file
+- It's already in `.gitignore` to prevent accidental commits
+- Your bot token is like a password - keep it private
+
+### Legal & Terms of Service
+- This tool is for personal use only
+- Ensure compliance with NVIDIA's terms of service
+- The author is not responsible for any violations or issues
+- Always verify stock manually before purchasing
+
+## Files Generated
+
+- `stock_checker.log` - Detailed log of all checks and events
+- `notification_config.json` - Your notification settings (keep private!)
+- `screenshot_*.png` - Debug screenshots when status is unclear
+- `__pycache__/` - Python bytecode cache (safe to ignore)
+
+## Updating the Script
+
+To get the latest version:
+
+```powershell
+cd NvidiaWebsite5090Checker
+git pull
+```
+
+## Support & Contributing
+
+- **Issues**: Report bugs at https://github.com/curtisjmorrow/NvidiaWebsite5090Checker/issues
+- **Questions**: Check the log file first, then open an issue
+- **Contributing**: Pull requests welcome!
+
+## Other Notification Methods
+
+<details>
+<summary>Email Notifications (Gmail)</summary>
+
+1. Create App Password: https://myaccount.google.com/apppasswords
+2. Edit `notification_config.json`:
 ```json
 {
   "email": {
@@ -163,46 +515,20 @@ Edit `notification_config.json` to enable and configure your preferred notificat
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
     "sender_email": "your-email@gmail.com",
-    "sender_password": "your-app-password",
-    "recipient_email": "recipient@example.com"
+    "sender_password": "16-char-app-password",
+    "recipient_email": "your-email@gmail.com"
   }
 }
 ```
 
-**Gmail Setup:**
-1. Enable 2-factor authentication on your Google account
-2. Generate an [App Password](https://myaccount.google.com/apppasswords)
-3. Use the app password in the configuration
+</details>
 
-#### Desktop Notifications
-```json
-{
-  "desktop": {
-    "enabled": true
-  }
-}
-```
+<details>
+<summary>Discord Webhook</summary>
 
-Requires `plyer` package (uncomment in `requirements.txt`).
-
-#### Telegram Notifications
-```json
-{
-  "telegram": {
-    "enabled": true,
-    "bot_token": "your-bot-token",
-    "chat_id": "your-chat-id"
-  }
-}
-```
-
-**Setup:**
-1. Create a bot with [@BotFather](https://t.me/botfather)
-2. Get your bot token
-3. Start a chat with your bot
-4. Get your chat ID from `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
-
-#### Discord Notifications
+1. Go to Discord Server Settings → Integrations → Webhooks
+2. Create webhook and copy URL
+3. Edit `notification_config.json`:
 ```json
 {
   "discord": {
@@ -211,254 +537,28 @@ Requires `plyer` package (uncomment in `requirements.txt`).
   }
 }
 ```
+4. Install: `pip install requests`
 
-**Setup:**
-1. Go to Server Settings > Integrations > Webhooks
-2. Create a new webhook
-3. Copy the webhook URL
+</details>
 
-#### Sound Alerts
-```json
+<details>
+<summary>Desktop Notifications (Windows/macOS/Linux)</summary>
+
+```powershell
+# Install plyer
+pip install plyer
+
+# Edit notification_config.json
 {
-  "sound": {
-    "enabled": true,
-    "file": "/path/to/custom/sound.mp3"
+  "desktop": {
+    "enabled": true
   }
 }
 ```
 
-Leave `file` empty to use system beep.
+Note: Only works when you're logged in and at your computer
 
-## Usage Examples
-
-### Monitor for 1 hour with 3-minute intervals
-```bash
-python nvidia_stock_checker.py --monitor --interval 180 --duration 3600
-```
-
-### Check different product URL
-```bash
-python nvidia_stock_checker.py --url "https://marketplace.nvidia.com/en-us/..." --monitor
-```
-
-### Run in background (Linux/macOS)
-```bash
-nohup python nvidia_stock_checker.py --monitor > output.log 2>&1 &
-```
-
-### Run with systemd (Linux - persistent service)
-
-Create `/etc/systemd/system/nvidia-stock-checker.service`:
-```ini
-[Unit]
-Description=NVIDIA RTX 5090 Stock Checker
-After=network.target
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/path/to/NvidiaWebsite5090Checker
-ExecStart=/usr/bin/python3 nvidia_stock_checker.py --monitor --interval 300
-Restart=always
-RestartSec=60
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable nvidia-stock-checker
-sudo systemctl start nvidia-stock-checker
-```
-
-Check status:
-```bash
-sudo systemctl status nvidia-stock-checker
-sudo journalctl -u nvidia-stock-checker -f
-```
-
-### Run with screen (Linux - survive logout)
-```bash
-screen -S nvidia-checker
-python nvidia_stock_checker.py --monitor
-# Press Ctrl+A, then D to detach
-# Reattach with: screen -r nvidia-checker
-```
-
-### Run in Background (Windows PowerShell)
-
-**Option 1: Start-Process (Simple background)**
-```powershell
-# Run in background (new window, minimized)
-Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Minimized
-
-# Or run completely hidden
-Start-Process python -ArgumentList "nvidia_stock_checker.py --monitor" -WindowStyle Hidden
-```
-
-**Option 2: Run as background job**
-```powershell
-# Start as background job
-Start-Job -ScriptBlock { python nvidia_stock_checker.py --monitor }
-
-# Check job status
-Get-Job
-
-# View job output
-Receive-Job -Id 1 -Keep
-```
-
-**Option 3: Using pythonw.exe (no console window)**
-```powershell
-pythonw nvidia_stock_checker.py --monitor
-```
-
-### Run with Task Scheduler (Windows - persistent service)
-
-For running automatically on startup or on a schedule:
-
-1. **Open Task Scheduler**:
-   - Press `Win + R`, type `taskschd.msc`, press Enter
-
-2. **Create Basic Task**:
-   - Click "Create Basic Task" in the right panel
-   - Name: "NVIDIA Stock Checker"
-   - Description: "Monitor NVIDIA RTX 5090 stock availability"
-
-3. **Set Trigger**:
-   - Choose "When the computer starts" or "When I log on"
-   - Click Next
-
-4. **Set Action**:
-   - Select "Start a program"
-   - Program/script: `python.exe` (or full path: `C:\Users\YourName\AppData\Local\Programs\Python\Python311\python.exe`)
-   - Add arguments: `nvidia_stock_checker.py --monitor`
-   - Start in: `C:\path\to\NvidiaWebsite5090Checker`
-   - Click Next and Finish
-
-5. **Advanced Settings** (optional):
-   - Right-click the task > Properties
-   - Under "General" tab: Check "Run whether user is logged on or not"
-   - Under "Settings" tab: Check "Run task as soon as possible after a scheduled start is missed"
-   - Under "Settings" tab: Check "If the task fails, restart every: 1 minute"
-
-6. **Test the Task**:
-   - Right-click the task and select "Run"
-   - Check the log file to verify it's working
-
-## Command-Line Options
-
-```
-usage: nvidia_stock_checker.py [-h] [--url URL] [--monitor] [--interval INTERVAL]
-                               [--duration DURATION] [--no-headless]
-                               [--notify-config NOTIFY_CONFIG] [--create-notify-config]
-
-Check NVIDIA RTX 5090 stock availability
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --url URL             URL to check (default: RTX 5090 Founders Edition)
-  --monitor             Continuously monitor instead of single check
-  --interval INTERVAL   Monitoring interval in seconds (default: 300)
-  --duration DURATION   Total monitoring duration in seconds (default: infinite)
-  --no-headless         Show browser window (default: headless)
-  --notify-config NOTIFY_CONFIG
-                        Path to notification configuration file
-  --create-notify-config
-                        Create sample notification configuration file and exit
-```
-
-## Logging
-
-The script creates a `stock_checker.log` file with detailed information about each check:
-
-```bash
-# View log in real-time
-tail -f stock_checker.log
-
-# Search for in-stock events
-grep "IN STOCK" stock_checker.log
-```
-
-## Troubleshooting
-
-### ChromeDriver version mismatch
-```
-Error: This version of ChromeDriver only supports Chrome version X
-```
-
-**Solution:** Install matching ChromeDriver version:
-```bash
-# Check Chrome version
-google-chrome --version
-
-# Download matching ChromeDriver from:
-# https://chromedriver.chromium.org/downloads
-```
-
-### Selenium WebDriver not found
-```
-selenium.common.exceptions.WebDriverException: 'chromedriver' executable needs to be in PATH
-```
-
-**Solution:** Add ChromeDriver to PATH or specify location:
-```python
-# In nvidia_stock_checker.py, modify setup_driver():
-self.driver = webdriver.Chrome(
-    executable_path='/path/to/chromedriver',
-    options=chrome_options
-)
-```
-
-### Website structure changed
-If the script can't detect stock status, it saves screenshots to help debug:
-- Check `screenshot_*.png` files
-- Update detection selectors in `_detect_stock_status()` method
-
-### Desktop notifications not working
-```bash
-# Linux - install notification daemon
-sudo apt-get install libnotify-bin
-
-# Install plyer
-pip install plyer
-```
-
-### Email notifications failing
-- Verify SMTP settings are correct
-- For Gmail, use an App Password, not your regular password
-- Check firewall/antivirus isn't blocking SMTP port 587
-
-## How It Works
-
-1. **Browser Automation**: Uses Selenium WebDriver to load the NVIDIA Marketplace page
-2. **Stock Detection**: Checks for multiple indicators:
-   - "Add to Cart" or "Buy Now" buttons
-   - "Out of Stock" text
-   - "In Stock" text
-   - Page source analysis
-3. **Notification**: When stock is detected, sends alerts via configured methods
-4. **Continuous Monitoring**: Repeats checks at specified intervals
-5. **Logging**: Records all activity to log file and console
-
-## Best Practices
-
-- **Check Interval**: Don't set intervals too short (recommended minimum: 60 seconds) to avoid being rate-limited
-- **Unattended Operation**: Use systemd service or screen for reliable long-term monitoring
-- **Multiple Notifications**: Enable multiple notification methods for redundancy
-- **Test First**: Run a single check with `--no-headless` to verify it's working correctly
-- **Monitor Logs**: Regularly check logs to ensure the script is running properly
-
-## Security Notes
-
-- **Notification Config**: The `notification_config.json` contains sensitive credentials (passwords, tokens)
-- **Keep Secure**: Don't commit this file to version control
-- **Permissions**: Set appropriate file permissions:
-  ```bash
-  chmod 600 notification_config.json
-  ```
+</details>
 
 ## License
 
@@ -470,5 +570,10 @@ This tool is for personal use only. The author is not responsible for:
 - Any violations of NVIDIA's terms of service
 - Failed purchases or missed opportunities
 - Any damages resulting from use of this software
+- Rate limiting or blocking by NVIDIA
 
 Always verify stock availability manually before making a purchase.
+
+---
+
+**Good luck getting your RTX 5090!** 🎮🚀
