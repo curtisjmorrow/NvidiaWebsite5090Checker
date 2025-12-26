@@ -41,16 +41,20 @@ logger = logging.getLogger(__name__)
 class NvidiaStockChecker:
     """Checker for NVIDIA RTX 5090 stock availability"""
 
-    def __init__(self, url, headless=True, notifier=None):
+    def __init__(self, urls, headless=True, notifier=None):
         """
         Initialize the stock checker
 
         Args:
-            url: The NVIDIA marketplace URL to check
+            urls: List of URLs to check or single URL string
             headless: Whether to run browser in headless mode
             notifier: Notifier instance for alerts
         """
-        self.url = url
+        # Convert single URL to list
+        if isinstance(urls, str):
+            self.urls = [urls]
+        else:
+            self.urls = urls
         self.headless = headless
         self.driver = None
         self.notifier = notifier
@@ -109,9 +113,12 @@ class NvidiaStockChecker:
             logger.error(f"Failed to initialize Chrome WebDriver: {e}")
             raise
 
-    def check_stock(self):
+    def check_stock(self, url):
         """
-        Check if the graphics card is in stock
+        Check if the graphics card is in stock at a specific URL
+
+        Args:
+            url: The URL to check
 
         Returns:
             dict: Stock status information including availability and timestamp
@@ -120,17 +127,17 @@ class NvidiaStockChecker:
             self.setup_driver()
 
         try:
-            logger.info(f"Loading URL: {self.url}")
+            logger.info(f"Loading URL: {url}")
 
             try:
-                self.driver.get(self.url)
+                self.driver.get(url)
             except TimeoutException:
                 logger.error("Page load timeout - restarting driver")
                 self.close()
                 self.setup_driver()
                 return {
                     'timestamp': datetime.now().isoformat(),
-                    'url': self.url,
+                    'url': url,
                     'in_stock': None,
                     'status_text': 'Page load timeout - will retry next check',
                     'detection_method': 'timeout'
@@ -156,7 +163,7 @@ class NvidiaStockChecker:
 
             result = {
                 'timestamp': datetime.now().isoformat(),
-                'url': self.url,
+                'url': url,
                 'in_stock': stock_status['in_stock'],
                 'status_text': stock_status['text'],
                 'detection_method': stock_status['method']
@@ -170,7 +177,7 @@ class NvidiaStockChecker:
             self.close()
             return {
                 'timestamp': datetime.now().isoformat(),
-                'url': self.url,
+                'url': url,
                 'in_stock': None,
                 'status_text': 'Timeout error - driver restarted',
                 'detection_method': 'timeout_error'
@@ -184,7 +191,7 @@ class NvidiaStockChecker:
                 pass
             return {
                 'timestamp': datetime.now().isoformat(),
-                'url': self.url,
+                'url': url,
                 'in_stock': None,
                 'status_text': f'Error: {str(e)}',
                 'detection_method': 'error'
@@ -358,20 +365,32 @@ class NvidiaStockChecker:
         check_count = 0
 
         logger.info(f"Starting stock monitoring (base interval: {interval}s with randomization)")
+        logger.info(f"Monitoring {len(self.urls)} URL(s)")
 
         try:
             while True:
                 check_count += 1
                 logger.info(f"Check #{check_count}")
 
-                result = self.check_stock()
+                # Check each URL
+                for url in self.urls:
+                    # Determine site name for notifications
+                    if 'bestbuy.com' in url:
+                        site_name = 'Best Buy'
+                    elif 'nvidia.com' in url:
+                        site_name = 'NVIDIA'
+                    else:
+                        site_name = 'Unknown Site'
 
-                if result['in_stock'] is True:
-                    logger.warning("PRODUCT IS IN STOCK!")
-                    alert_message = f"""
-🚨 RTX 5090 IS IN STOCK! 🚨
+                    result = self.check_stock(url)
+
+                    if result['in_stock'] is True:
+                        logger.warning(f"PRODUCT IS IN STOCK AT {site_name.upper()}!")
+                        alert_message = f"""
+🚨 RTX 5090 IS IN STOCK at {site_name}! 🚨
 
 Status: {result['status_text']}
+Store: {site_name}
 Time: {result['timestamp']}
 
 👉 BUY NOW:
@@ -379,24 +398,28 @@ Time: {result['timestamp']}
 
 Click the link above to purchase immediately!
 """
-                    print("\n" + "="*60)
-                    print("ALERT: RTX 5090 IS IN STOCK!")
-                    print(f"Status: {result['status_text']}")
-                    print(f"URL: {result['url']}")
-                    print(f"Time: {result['timestamp']}")
-                    print("="*60 + "\n")
+                        print("\n" + "="*60)
+                        print(f"ALERT: RTX 5090 IS IN STOCK at {site_name}!")
+                        print(f"Status: {result['status_text']}")
+                        print(f"URL: {result['url']}")
+                        print(f"Time: {result['timestamp']}")
+                        print("="*60 + "\n")
 
-                    # Send notifications
-                    if self.notifier:
-                        self.notifier.notify(
-                            message=alert_message,
-                            title="RTX 5090 IN STOCK!"
-                        )
+                        # Send notifications
+                        if self.notifier:
+                            self.notifier.notify(
+                                message=alert_message,
+                                title=f"RTX 5090 IN STOCK at {site_name}!"
+                            )
 
-                elif result['in_stock'] is False:
-                    logger.info(f"Out of stock - {result['status_text']}")
-                else:
-                    logger.warning(f"Unclear status - {result['status_text']}")
+                    elif result['in_stock'] is False:
+                        logger.info(f"{site_name}: Out of stock - {result['status_text']}")
+                    else:
+                        logger.warning(f"{site_name}: Unclear status - {result['status_text']}")
+
+                    # Small delay between checking different sites (1-3 seconds)
+                    if url != self.urls[-1]:  # Not the last URL
+                        time.sleep(random.uniform(1.0, 3.0))
 
                 # Check if we should stop
                 if duration and (time.time() - start_time) >= duration:
@@ -424,8 +447,9 @@ def main():
     )
     parser.add_argument(
         '--url',
-        default='https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/',
-        help='URL to check (default: RTX 5090 Founders Edition)'
+        action='append',
+        default=None,
+        help='URL to check (can be specified multiple times for multiple sites)'
     )
     parser.add_argument(
         '--monitor',
@@ -523,8 +547,18 @@ Time: {timestamp}
     elif Notifier:
         logger.info("No notification config found, notifications disabled")
 
+    # Set default URLs if none provided
+    if args.url is None:
+        urls = [
+            'https://marketplace.nvidia.com/en-us/consumer/graphics-cards/geforce-rtx-5090-founders-edition/',
+            'https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-founders-edition-graphics-card-dark-gun-metal/6604067.p'
+        ]
+        logger.info("No URLs specified, using default: NVIDIA + Best Buy")
+    else:
+        urls = args.url
+
     checker = NvidiaStockChecker(
-        url=args.url,
+        urls=urls,
         headless=not args.no_headless,
         notifier=notifier
     )
@@ -533,7 +567,9 @@ Time: {timestamp}
         if args.monitor:
             checker.monitor(interval=args.interval, duration=args.duration)
         else:
-            result = checker.check_stock()
+            # Single check mode - check all URLs
+            for url in checker.urls:
+                result = checker.check_stock(url)
 
             print("\n" + "="*60)
             print("NVIDIA RTX 5090 Stock Check Result")
