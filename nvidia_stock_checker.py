@@ -9,6 +9,7 @@ import time
 import logging
 import random
 from datetime import datetime
+from contextlib import nullcontext
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -24,6 +25,11 @@ try:
 except ImportError:
     Notifier = None
     logger.warning("Notifier module not available")
+
+try:
+    from wakepy import keep
+except ImportError:
+    keep = None
 
 # Configure logging
 logging.basicConfig(
@@ -370,26 +376,34 @@ class NvidiaStockChecker:
         logger.info(f"Starting stock monitoring (base interval: {interval}s with randomization)")
         logger.info(f"Monitoring {len(self.urls)} URL(s)")
 
+        # Prevent PC from sleeping during monitoring
+        if keep:
+            logger.info("Preventing PC from sleeping during monitoring")
+        else:
+            logger.warning("wakepy not available - PC may sleep during monitoring")
+
         try:
-            while True:
-                check_count += 1
-                logger.info(f"Check #{check_count}")
+            # Use wakepy to keep PC awake during monitoring
+            with keep.running() if keep else nullcontext():
+                while True:
+                    check_count += 1
+                    logger.info(f"Check #{check_count}")
 
-                # Check each URL
-                for url in self.urls:
-                    # Determine site name for notifications
-                    if 'bestbuy.com' in url:
-                        site_name = 'Best Buy'
-                    elif 'nvidia.com' in url:
-                        site_name = 'NVIDIA'
-                    else:
-                        site_name = 'Unknown Site'
+                    # Check each URL
+                    for url in self.urls:
+                        # Determine site name for notifications
+                        if 'bestbuy.com' in url:
+                            site_name = 'Best Buy'
+                        elif 'nvidia.com' in url:
+                            site_name = 'NVIDIA'
+                        else:
+                            site_name = 'Unknown Site'
 
-                    result = self.check_stock(url)
+                        result = self.check_stock(url)
 
-                    if result['in_stock'] is True:
-                        logger.warning(f"PRODUCT IS IN STOCK AT {site_name.upper()}!")
-                        alert_message = f"""
+                        if result['in_stock'] is True:
+                            logger.warning(f"PRODUCT IS IN STOCK AT {site_name.upper()}!")
+                            alert_message = f"""
 🚨 RTX 5090 IS IN STOCK at {site_name}! 🚨
 
 Status: {result['status_text']}
@@ -401,42 +415,42 @@ Time: {result['timestamp']}
 
 Click the link above to purchase immediately!
 """
-                        print("\n" + "="*60)
-                        print(f"ALERT: RTX 5090 IS IN STOCK at {site_name}!")
-                        print(f"Status: {result['status_text']}")
-                        print(f"URL: {result['url']}")
-                        print(f"Time: {result['timestamp']}")
-                        print("="*60 + "\n")
+                            print("\n" + "="*60)
+                            print(f"ALERT: RTX 5090 IS IN STOCK at {site_name}!")
+                            print(f"Status: {result['status_text']}")
+                            print(f"URL: {result['url']}")
+                            print(f"Time: {result['timestamp']}")
+                            print("="*60 + "\n")
 
-                        # Send notifications
-                        if self.notifier:
-                            self.notifier.notify(
-                                message=alert_message,
-                                title=f"RTX 5090 IN STOCK at {site_name}!"
-                            )
+                            # Send notifications
+                            if self.notifier:
+                                self.notifier.notify(
+                                    message=alert_message,
+                                    title=f"RTX 5090 IN STOCK at {site_name}!"
+                                )
 
-                    elif result['in_stock'] is False:
-                        logger.info(f"{site_name}: Out of stock - {result['status_text']}")
-                    else:
-                        logger.warning(f"{site_name}: Unclear status - {result['status_text']}")
+                        elif result['in_stock'] is False:
+                            logger.info(f"{site_name}: Out of stock - {result['status_text']}")
+                        else:
+                            logger.warning(f"{site_name}: Unclear status - {result['status_text']}")
 
-                    # Small delay between checking different sites (1-3 seconds)
-                    if url != self.urls[-1]:  # Not the last URL
-                        time.sleep(random.uniform(1.0, 3.0))
+                        # Small delay between checking different sites (1-3 seconds)
+                        if url != self.urls[-1]:  # Not the last URL
+                            time.sleep(random.uniform(1.0, 3.0))
 
-                # Check if we should stop
-                if duration and (time.time() - start_time) >= duration:
-                    logger.info(f"Monitoring duration complete ({duration}s)")
-                    break
+                    # Check if we should stop
+                    if duration and (time.time() - start_time) >= duration:
+                        logger.info(f"Monitoring duration complete ({duration}s)")
+                        break
 
-                # Randomize wait time to avoid detection (±20% variation)
-                # For 10 second interval: random between 8-12 seconds
-                min_wait = interval * 0.8
-                max_wait = interval * 1.2
-                actual_wait = random.uniform(min_wait, max_wait)
+                    # Randomize wait time to avoid detection (±20% variation)
+                    # For 10 second interval: random between 8-12 seconds
+                    min_wait = interval * 0.8
+                    max_wait = interval * 1.2
+                    actual_wait = random.uniform(min_wait, max_wait)
 
-                logger.info(f"Waiting {actual_wait:.1f} seconds until next check...")
-                time.sleep(actual_wait)
+                    logger.info(f"Waiting {actual_wait:.1f} seconds until next check...")
+                    time.sleep(actual_wait)
 
         except KeyboardInterrupt:
             logger.info("Monitoring stopped by user")

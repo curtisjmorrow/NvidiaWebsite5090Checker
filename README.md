@@ -11,6 +11,7 @@ Automatically monitor the NVIDIA Marketplace for RTX 5090 Founders Edition stock
 - ⚙️ **Configurable check intervals** (default: every 10 seconds with randomization)
 - 🌐 **Multiple notification options** (Telegram, email, desktop, Discord, webhooks)
 - 🖥️ **Headless mode** for efficient background operation
+- 💤 **Prevents PC from sleeping** during monitoring (automatic via wakepy)
 
 ## Quick Start for Windows 11
 
@@ -389,6 +390,11 @@ This version of ChromeDriver only supports Chrome version X
 - Check `stock_checker.log` for errors
 - Use Task Scheduler to auto-restart on failure
 
+### PC goes to sleep during monitoring
+- The script automatically prevents sleep when running (via `wakepy`)
+- If you see "wakepy not available" warning, install it: `pip install wakepy`
+- As a backup, you can disable sleep in Windows Settings → System → Power & sleep
+
 ## Linux / macOS Setup
 
 <details>
@@ -522,8 +528,9 @@ nohup python3 nvidia_stock_checker.py --monitor > output.log 2>&1 &
    - Page source analysis as fallback
 3. **Notification**: When stock is detected, sends alerts via configured methods
 4. **Continuous Monitoring**: Repeats checks at specified intervals
-5. **Logging**: Records all checks, status changes, and errors to `stock_checker.log`
-6. **Screenshots**: Captures page screenshots when status is unclear for debugging
+5. **Keep Awake**: Automatically prevents your PC from sleeping during monitoring using `wakepy`
+6. **Logging**: Records all checks, status changes, and errors to `stock_checker.log`
+7. **Screenshots**: Captures page screenshots when status is unclear for debugging
 
 ## What You'll Receive
 

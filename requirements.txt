@@ -1,5 +1,8 @@
 selenium>=4.16.0
 
+# Prevent PC from sleeping during monitoring
+wakepy>=0.9.0
+
 # Optional notification dependencies
 # Uncomment the ones you want to use:
 
