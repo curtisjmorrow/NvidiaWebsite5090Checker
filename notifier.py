@@ -37,6 +37,12 @@ class Notifier:
         """
         success = False
 
+        # ALWAYS play loud alert for stock notifications (even if sound is disabled in config)
+        # This ensures you hear it if you're at your PC
+        if self._play_loud_alert():
+            success = True
+            logger.info("LOUD PC ALERT PLAYED!")
+
         # Try email notification
         if self.config.get('email', {}).get('enabled'):
             if self._send_email(message, title):
@@ -52,7 +58,7 @@ class Notifier:
             if self._send_webhook(message, title):
                 success = True
 
-        # Try sound alert
+        # Try sound alert (if custom sound file configured)
         if self.config.get('sound', {}).get('enabled'):
             if self._play_sound():
                 success = True
@@ -273,6 +279,56 @@ This is an automated notification from your NVIDIA Stock Checker.
 
         except Exception as e:
             logger.error(f"Failed to play sound: {e}")
+            return False
+
+    def _play_loud_alert(self):
+        """Play LOUD alert sound - multiple beeps to grab attention"""
+        try:
+            import platform
+            system = platform.system()
+
+            if system == 'Windows':
+                try:
+                    import winsound
+                    # Play a sequence of LOUD beeps (frequency, duration_ms)
+                    beep_sequence = [
+                        (2000, 300),  # High pitch
+                        (1500, 300),  # Medium
+                        (2000, 300),  # High
+                        (1500, 300),  # Medium
+                        (2500, 500),  # Very high and longer
+                    ]
+                    for freq, duration in beep_sequence:
+                        winsound.Beep(freq, duration)
+                        import time
+                        time.sleep(0.1)  # Small gap between beeps
+                    logger.info("LOUD alert beeps played on Windows")
+                    return True
+                except ImportError:
+                    pass
+
+            elif system == 'Darwin':  # macOS
+                # Play system alert sound multiple times
+                for _ in range(5):
+                    os.system('afplay /System/Library/Sounds/Sosumi.aiff')
+                    import time
+                    time.sleep(0.2)
+                logger.info("LOUD alert played on macOS")
+                return True
+
+            elif system == 'Linux':
+                # Multiple beeps
+                for _ in range(5):
+                    os.system('beep -f 2000 -l 300')
+                    import time
+                    time.sleep(0.1)
+                logger.info("LOUD alert played on Linux")
+                return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Failed to play loud alert: {e}")
             return False
 
     def send_health_check(self, uptime_hours, check_count, error_count=0, last_error=None):

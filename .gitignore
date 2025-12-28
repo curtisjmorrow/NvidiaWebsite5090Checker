@@ -1,6 +1,9 @@
 # Notification configuration (contains sensitive credentials)
 notification_config.json
 
+# Browser session cookies
+browser_cookies.pkl
+
 # Logs
 *.log
 stock_checker.log

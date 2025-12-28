@@ -10,6 +10,8 @@ import logging
 import random
 from datetime import datetime
 from contextlib import nullcontext
+import pickle
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -47,7 +49,7 @@ logger = logging.getLogger(__name__)
 class NvidiaStockChecker:
     """Checker for NVIDIA RTX 5090 stock availability"""
 
-    def __init__(self, urls, headless=True, notifier=None):
+    def __init__(self, urls, headless=True, notifier=None, cookies_file='browser_cookies.pkl'):
         """
         Initialize the stock checker
 
@@ -55,6 +57,7 @@ class NvidiaStockChecker:
             urls: List of URLs to check or single URL string
             headless: Whether to run browser in headless mode
             notifier: Notifier instance for alerts
+            cookies_file: File to save/load cookies for session persistence
         """
         # Convert single URL to list
         if isinstance(urls, str):
@@ -64,6 +67,7 @@ class NvidiaStockChecker:
         self.headless = headless
         self.driver = None
         self.notifier = notifier
+        self.cookies_file = cookies_file
 
     def setup_driver(self):
         """Setup Chrome WebDriver with appropriate options"""
@@ -119,6 +123,35 @@ class NvidiaStockChecker:
             logger.error(f"Failed to initialize Chrome WebDriver: {e}")
             raise
 
+    def save_cookies(self):
+        """Save current browser cookies to file for session persistence"""
+        try:
+            if self.driver and self.cookies_file:
+                cookies = self.driver.get_cookies()
+                with open(self.cookies_file, 'wb') as f:
+                    pickle.dump(cookies, f)
+                logger.debug(f"Saved {len(cookies)} cookies to {self.cookies_file}")
+        except Exception as e:
+            logger.warning(f"Failed to save cookies: {e}")
+
+    def load_cookies(self):
+        """Load cookies from file to maintain session"""
+        try:
+            if self.driver and self.cookies_file and os.path.exists(self.cookies_file):
+                with open(self.cookies_file, 'rb') as f:
+                    cookies = pickle.load(f)
+                for cookie in cookies:
+                    try:
+                        self.driver.add_cookie(cookie)
+                    except Exception as e:
+                        # Some cookies may be domain-specific and fail to add
+                        logger.debug(f"Could not add cookie: {e}")
+                logger.info(f"Loaded {len(cookies)} cookies from {self.cookies_file}")
+                return True
+        except Exception as e:
+            logger.warning(f"Failed to load cookies: {e}")
+        return False
+
     def check_stock(self, url):
         """
         Check if the graphics card is in stock at a specific URL
@@ -136,7 +169,16 @@ class NvidiaStockChecker:
             logger.info(f"Loading URL: {url}")
 
             try:
+                # Load the page
                 self.driver.get(url)
+
+                # Try to load cookies from previous session (makes us look like a returning visitor)
+                self.load_cookies()
+
+                # Refresh with cookies loaded
+                if os.path.exists(self.cookies_file):
+                    self.driver.refresh()
+
             except TimeoutException:
                 logger.error("Page load timeout - restarting driver")
                 self.close()
@@ -174,6 +216,9 @@ class NvidiaStockChecker:
                 'status_text': stock_status['text'],
                 'detection_method': stock_status['method']
             }
+
+            # Save cookies for next session (makes us look like a returning visitor)
+            self.save_cookies()
 
             return result
 

@@ -12,6 +12,9 @@ Automatically monitor the NVIDIA Marketplace for RTX 5090 Founders Edition stock
 - 🌐 **Multiple notification options** (Telegram, email, desktop, Discord, webhooks)
 - 🖥️ **Headless mode** for efficient background operation
 - 💤 **Prevents PC from sleeping** during monitoring (automatic via wakepy)
+- 🔊 **LOUD PC sound alert** - Multiple beeps to grab your attention if you're at your PC
+- 🍪 **Session persistence** - Saves cookies between runs to look like a real returning visitor
+- 📧 **Daily health check emails** - Get confirmation the script is still running
 
 ## Quick Start for Windows 11
 
@@ -569,21 +572,33 @@ nohup python3 nvidia_stock_checker.py --monitor > output.log 2>&1 &
 ## How It Works
 
 1. **Browser Automation**: Uses Selenium WebDriver to load the NVIDIA Marketplace page like a real browser
-2. **Stock Detection**: Checks for multiple indicators:
+2. **Session Persistence**: Saves and loads cookies between checks to appear as a returning visitor (reduces bot detection)
+3. **Stock Detection**: Checks for multiple indicators:
    - "Add to Cart" or "Buy Now" buttons (in stock)
    - "Out of Stock" or "Sold Out" text (out of stock)
    - "In Stock" text (in stock)
    - Page source analysis as fallback
-3. **Notification**: When stock is detected, sends alerts via configured methods
-4. **Continuous Monitoring**: Repeats checks at specified intervals
-5. **Keep Awake**: Automatically prevents your PC from sleeping during monitoring using `wakepy`
-6. **Logging**: Records all checks, status changes, and errors to `stock_checker.log`
-7. **Screenshots**: Captures page screenshots when status is unclear for debugging
+4. **Multi-Alert System**: When stock is detected:
+   - Sends Telegram message to your phone
+   - Plays LOUD beeping sequence on your PC (5 beeps in alternating tones)
+   - Sends email notification (if configured)
+   - Shows desktop notification (if configured)
+5. **Continuous Monitoring**: Repeats checks at specified intervals with randomization to avoid detection
+6. **Keep Awake**: Automatically prevents your PC from sleeping during monitoring using `wakepy`
+7. **Health Checks**: Sends daily email reports confirming the script is still running
+8. **Logging**: Records all checks, status changes, and errors to `stock_checker.log`
+9. **Screenshots**: Captures page screenshots when status is unclear for debugging
 
 ## What You'll Receive
 
-When the RTX 5090 is in stock, you'll get a Telegram message like:
+When the RTX 5090 is in stock, you'll receive:
 
+1. **LOUD PC Alert** (if you're at your PC):
+   - 5 loud beeps in alternating tones (2000Hz → 1500Hz → 2000Hz → 1500Hz → 2500Hz)
+   - Plays automatically, even if sound is disabled in config
+   - Impossible to miss if you're nearby!
+
+2. **Telegram message** on your phone:
 ```
 🚨 RTX 5090 IS IN STOCK! 🚨
 
