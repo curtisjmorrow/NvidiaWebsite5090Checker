@@ -275,6 +275,87 @@ This is an automated notification from your NVIDIA Stock Checker.
             logger.error(f"Failed to play sound: {e}")
             return False
 
+    def send_health_check(self, uptime_hours, check_count, error_count=0, last_error=None):
+        """
+        Send health check notification via email only (not Telegram)
+
+        Args:
+            uptime_hours: Hours the script has been running
+            check_count: Total number of stock checks performed
+            error_count: Number of errors encountered
+            last_error: Description of last error (if any)
+        """
+        try:
+            if not self.config.get('email', {}).get('enabled'):
+                logger.info("Email not enabled, skipping health check")
+                return False
+
+            email_config = self.config['email']
+
+            smtp_server = email_config.get('smtp_server')
+            smtp_port = email_config.get('smtp_port', 587)
+            sender_email = email_config.get('sender_email')
+            sender_password = email_config.get('sender_password')
+            recipient_email = email_config.get('recipient_email')
+
+            if not all([smtp_server, sender_email, sender_password, recipient_email]):
+                logger.warning("Email config incomplete, skipping health check")
+                return False
+
+            # Build health status message
+            status = "✓ Healthy" if error_count == 0 else "⚠ Running with errors"
+
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = recipient_email
+            msg['Subject'] = f"RTX 5090 Checker - Daily Health Check {status}"
+
+            body = f"""
+RTX 5090 Stock Checker - Health Check Report
+=============================================
+
+Status: {status}
+Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Performance Metrics:
+-------------------
+- Uptime: {uptime_hours:.1f} hours
+- Total Checks: {check_count:,}
+- Errors: {error_count}
+- Average Rate: {check_count / uptime_hours:.1f} checks/hour
+
+"""
+
+            if last_error:
+                body += f"""
+Last Error:
+----------
+{last_error}
+
+"""
+
+            body += """
+The script is still running and monitoring for RTX 5090 stock.
+You will receive a Telegram notification when stock is detected.
+
+---
+This is an automated health check from your NVIDIA Stock Checker.
+"""
+
+            msg.attach(MIMEText(body, 'plain'))
+
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+
+            logger.info(f"Health check email sent to {recipient_email}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send health check email: {e}")
+            return False
+
 
 def load_config_from_file(config_file='notification_config.json'):
     """
@@ -304,8 +385,9 @@ def create_sample_config(config_file='notification_config.json'):
             "smtp_server": "smtp.gmail.com",
             "smtp_port": 587,
             "sender_email": "your-email@gmail.com",
-            "sender_password": "your-app-password",
-            "recipient_email": "recipient@example.com"
+            "sender_password": "your-16-character-app-password",
+            "recipient_email": "your-email@gmail.com",
+            "note": "For Gmail: Enable 2FA, then create App Password at https://myaccount.google.com/apppasswords"
         },
         "desktop": {
             "enabled": True

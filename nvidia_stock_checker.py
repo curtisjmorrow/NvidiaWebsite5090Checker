@@ -362,19 +362,27 @@ class NvidiaStockChecker:
             self.driver.quit()
             logger.info("WebDriver closed")
 
-    def monitor(self, interval=10, duration=None):
+    def monitor(self, interval=10, duration=None, health_check_interval=86400):
         """
         Continuously monitor stock status
 
         Args:
             interval: Base time between checks in seconds (default: 10)
             duration: Total duration to monitor in seconds (None = infinite)
+            health_check_interval: Seconds between health check emails (default: 86400 = 24 hours)
         """
         start_time = time.time()
         check_count = 0
+        error_count = 0
+        last_error = None
+        last_health_check = time.time()
 
         logger.info(f"Starting stock monitoring (base interval: {interval}s with randomization)")
         logger.info(f"Monitoring {len(self.urls)} URL(s)")
+        if self.notifier and self.notifier.config.get('email', {}).get('enabled'):
+            logger.info(f"Daily health checks enabled (every {health_check_interval/3600:.0f} hours via email)")
+        else:
+            logger.info("Health checks disabled (enable email in notification config)")
 
         # Prevent PC from sleeping during monitoring
         if keep:
@@ -388,6 +396,20 @@ class NvidiaStockChecker:
                 while True:
                     check_count += 1
                     logger.info(f"Check #{check_count}")
+
+                    # Check if it's time for a health check
+                    time_since_health_check = time.time() - last_health_check
+                    if time_since_health_check >= health_check_interval and self.notifier:
+                        uptime_hours = (time.time() - start_time) / 3600
+                        logger.info("Sending daily health check email...")
+                        if self.notifier.send_health_check(
+                            uptime_hours=uptime_hours,
+                            check_count=check_count,
+                            error_count=error_count,
+                            last_error=last_error
+                        ):
+                            last_health_check = time.time()
+                            logger.info("Health check email sent successfully")
 
                     # Check each URL
                     for url in self.urls:
@@ -433,6 +455,8 @@ Click the link above to purchase immediately!
                             logger.info(f"{site_name}: Out of stock - {result['status_text']}")
                         else:
                             logger.warning(f"{site_name}: Unclear status - {result['status_text']}")
+                            error_count += 1
+                            last_error = f"{site_name}: {result['status_text']} at {result['timestamp']}"
 
                         # Small delay between checking different sites (1-3 seconds)
                         if url != self.urls[-1]:  # Not the last URL
@@ -506,6 +530,12 @@ def main():
         type=int,
         default=None,
         help='Total monitoring duration in seconds (default: infinite)'
+    )
+    parser.add_argument(
+        '--health-check-hours',
+        type=int,
+        default=24,
+        help='Hours between health check emails (default: 24, requires email enabled in config)'
     )
     parser.add_argument(
         '--no-headless',
@@ -623,7 +653,12 @@ Time: {timestamp}
 
     try:
         if args.monitor:
-            checker.monitor(interval=args.interval, duration=args.duration)
+            health_check_interval = args.health_check_hours * 3600  # Convert hours to seconds
+            checker.monitor(
+                interval=args.interval,
+                duration=args.duration,
+                health_check_interval=health_check_interval
+            )
         else:
             # Single check mode - check all URLs
             for url in checker.urls:

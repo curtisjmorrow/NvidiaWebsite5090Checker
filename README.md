@@ -172,6 +172,49 @@ Check the log file to verify Telegram is configured:
 notepad stock_checker.log
 ```
 
+### Optional: Set Up Email Health Checks
+
+Get daily "still alive" emails to confirm the script is running without spamming your Telegram:
+
+**Step 1: Create Gmail App Password**
+
+1. Go to https://myaccount.google.com/security
+2. Enable 2-Factor Authentication if not already enabled
+3. Go to https://myaccount.google.com/apppasswords
+4. Select "Mail" and "Windows Computer" (or Other)
+5. Click "Generate"
+6. Copy the 16-character password (no spaces)
+
+**Step 2: Configure Email in notification_config.json**
+
+```powershell
+notepad notification_config.json
+```
+
+Update the email section:
+```json
+{
+  "email": {
+    "enabled": true,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "curtisjmorrow@gmail.com",
+    "sender_password": "your-16-char-app-password-here",
+    "recipient_email": "curtisjmorrow@gmail.com"
+  },
+  "telegram": {
+    "enabled": true,
+    ...
+  }
+}
+```
+
+**What you'll receive:**
+- Daily email at the same time each day with script health status
+- Shows uptime, # of checks performed, any errors
+- **Telegram still used for stock alerts** (urgent notifications)
+- Email only for quiet health checks
+
 ### Step 6: Test Notifications (Recommended)
 
 Before starting monitoring, test that notifications work:
@@ -459,23 +502,25 @@ python3 nvidia_stock_checker.py --monitor
 usage: nvidia_stock_checker.py [-h] [--url URL] [--no-nvidia] [--no-bestbuy]
                                [--nvidia-url URL] [--bestbuy-url URL]
                                [--monitor] [--interval INTERVAL] [--duration DURATION]
+                               [--health-check-hours HOURS]
                                [--no-headless] [--notify-config NOTIFY_CONFIG]
                                [--create-notify-config] [--test-notification]
 
 Options:
-  -h, --help            Show help message
-  --url URL             URL to check (can specify multiple times, overrides defaults)
-  --no-nvidia           Exclude NVIDIA from monitoring (only monitor Best Buy)
-  --no-bestbuy          Exclude Best Buy from monitoring (only monitor NVIDIA)
-  --nvidia-url URL      Custom NVIDIA URL to monitor (overrides default)
-  --bestbuy-url URL     Custom Best Buy URL to monitor (overrides default)
-  --monitor             Continuously monitor instead of single check
-  --interval INTERVAL   Check interval in seconds (default: 10, randomized ±20%)
-  --duration DURATION   Total monitoring duration in seconds (default: infinite)
-  --no-headless         Show browser window (useful for debugging)
-  --notify-config FILE  Path to notification config file
-  --create-notify-config Create sample notification config and exit
-  --test-notification   Send a test notification and exit
+  -h, --help                Show help message
+  --url URL                 URL to check (can specify multiple times, overrides defaults)
+  --no-nvidia               Exclude NVIDIA from monitoring (only monitor Best Buy)
+  --no-bestbuy              Exclude Best Buy from monitoring (only monitor NVIDIA)
+  --nvidia-url URL          Custom NVIDIA URL to monitor (overrides default)
+  --bestbuy-url URL         Custom Best Buy URL to monitor (overrides default)
+  --monitor                 Continuously monitor instead of single check
+  --interval INTERVAL       Check interval in seconds (default: 10, randomized ±20%)
+  --duration DURATION       Total monitoring duration in seconds (default: infinite)
+  --health-check-hours HOURS Hours between health check emails (default: 24, requires email enabled)
+  --no-headless             Show browser window (useful for debugging)
+  --notify-config FILE      Path to notification config file
+  --create-notify-config    Create sample notification config and exit
+  --test-notification       Send a test notification and exit
 ```
 
 ## Examples
@@ -510,6 +555,9 @@ python nvidia_stock_checker.py --monitor --interval 120
 
 # Monitor for 1 hour only
 python nvidia_stock_checker.py --monitor --duration 3600
+
+# Monitor with health checks every 12 hours instead of 24
+python nvidia_stock_checker.py --monitor --health-check-hours 12
 
 # Monitor with visible browser (debugging)
 python nvidia_stock_checker.py --monitor --no-headless
