@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  nvidia-stock-checker:
+    build: .
+    container_name: nvidia-5090-checker
+    restart: unless-stopped
+
+    environment:
+      # Check interval in seconds (default: 10)
+      - CHECK_INTERVAL=10
+
+      # Hours between health check emails (default: 24)
+      - HEALTH_CHECK_HOURS=24
+
+      # Timezone for accurate timestamps
+      - TZ=America/New_York
+
+    volumes:
+      # Configuration file (create this on your host first)
+      - ./notification_config.json:/app/data/notification_config.json:ro
+
+      # Persistent session cookies (improves bot detection avoidance)
+      - ./docker-data/cookies:/app/data
+
+      # Log files
+      - ./docker-data/logs:/app/logs
+
+      # Screenshots (for debugging)
+      - ./docker-data/screenshots:/app
+
+    # Resource limits (optional, adjust for your server)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

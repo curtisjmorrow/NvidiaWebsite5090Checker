@@ -1,0 +1,44 @@
+# Don't copy these to Docker image (keeps image lean)
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+README-DOCKER.md
+
+# User data (will be mounted as volumes instead)
+notification_config.json
+browser_cookies.pkl
+*.log
+screenshot_*.png
+docker-data/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files (no need to copy into image)
+Dockerfile
+docker-compose.yml
+.dockerignore

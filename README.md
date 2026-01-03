@@ -15,6 +15,14 @@ Automatically monitor the NVIDIA Marketplace for RTX 5090 Founders Edition stock
 - 🔊 **LOUD PC sound alert** - Multiple beeps to grab your attention if you're at your PC
 - 🍪 **Session persistence** - Saves cookies between runs to look like a real returning visitor
 - 📧 **Daily health check emails** - Get confirmation the script is still running
+- 🐳 **Docker support** - Run 24/7 on Unraid or any Docker server
+
+## Deployment Options
+
+Choose the method that works best for you:
+
+- **🖥️ Windows 11 (Native)** - Run on your PC with sound alerts → [Quick Start below](#quick-start-for-windows-11)
+- **🐳 Docker/Unraid** - Run 24/7 on your server, no PC needed → **[Docker Guide](README-DOCKER.md)**
 
 ## Quick Start for Windows 11
 

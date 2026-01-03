@@ -4,6 +4,9 @@ notification_config.json
 # Browser session cookies
 browser_cookies.pkl
 
+# Docker persistent data
+docker-data/
+
 # Logs
 *.log
 stock_checker.log
